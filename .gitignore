@@ -1,3 +1,6 @@
 .venv
+.idea
 node_modules
 node_modeiles 2
+__pycache__
+app/__pycache__
