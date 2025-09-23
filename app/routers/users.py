@@ -33,7 +33,7 @@ def set_my_public_key(
     db.refresh(current)
     return PublicKeyOut(user_id=current.id, username=current.username, public_key=current.public_key)
 
-@router.get("/users", response_model=List[UserPublic])
+@router.get("", response_model=List[UserPublic])
 def list_users(
     q: str | None = Query(None, description="Filtre par fragment de nom"),
     limit: int = 20,
