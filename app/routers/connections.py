@@ -1,14 +1,14 @@
 from __future__ import annotations
-from typing import List, Optional
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-from datetime import datetime, timezone
 from ..schemas import ConnectionIn, ConnectionOut
-from ..models import Connection, User
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.orm import Session
+from datetime import datetime, timezone, timedelta
+from typing import List
 from ..database import get_db
-from ..deps import get_current_user
+from ..models import Connection, User
+from ..deps import get_current_user, require_admin
 
-router = APIRouter(prefix="/connections", tags=["connections"])
+router = APIRouter(tags=["connections"])
 
 @router.post("/upsert", response_model=ConnectionOut)
 def upsert_connection(
@@ -30,31 +30,40 @@ def upsert_connection(
     if existing:
         existing.transport = payload.transport
         existing.address = payload.address
-        existing.last_seen_at = last_seen_at
+        existing.last_seen = last_seen_at
         db.add(existing)
         db.commit()
         db.refresh(existing)
         conn = existing
     else:
         conn = Connection(owner_id=current.id, peer_id=payload.peer_id, transport=payload.transport,
-                          address=payload.address, last_seen_at=last_seen_at)
+                          address=payload.address, last_seen=last_seen_at)
         db.add(conn)
         db.commit()
         db.refresh(conn)
     return ConnectionOut(peer_id=conn.peer_id, transport=conn.transport, address=conn.address,
-                         last_seen_at=conn.last_seen_at)
+                         last_seen=conn.last_seen_at)
 
-@router.get("", response_model=List[ConnectionOut])
+@router.get("")
 def list_connections(
+    minutes: int = Query(10, ge=1, le=1440),
     db: Session = Depends(get_db),
-    current: User = Depends(get_current_user),
-) -> List[ConnectionOut]:
-    """ Liste les voisins connus de l'utilisateur courant, ordonnés par dernière vue."""
+    admin: User = Depends(require_admin),
+) -> List[dict]:
+    """🇫🇷 Liste des connexions vues récemment (last_seen dans les N minutes)."""
+    since = datetime.now(timezone.utc) - timedelta(minutes=minutes)
     rows = (
         db.query(Connection)
-        .filter(Connection.owner_id == current.id)
-        .order_by(Connection.last_seen_at.desc())
+        .filter(Connection.last_seen >= since)
+        .order_by(Connection.last_seen.desc())
         .all()
     )
-    return [ConnectionOut(peer_id=r.peer_id, transport=r.transport, address=r.address, last_seen_at=r.last_seen_at) for
-            r in rows]
+    return [
+        {
+            "owner_id": c.owner_id,
+            "transport": c.transport,
+            "address": c.address,
+            "last_seen": c.last_seen,
+        }
+        for c in rows
+    ]

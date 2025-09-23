@@ -1,13 +1,12 @@
 """ Dépendances FastAPI (injection) : session DB et utilisateur courant."""
 from __future__ import annotations
 from typing import Optional
-from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy.orm import Session
 from .database import get_db
 from .auth import decode_access_token
 from .models import User
-from jwt import decode as jwt_decode
-from .config import SECRET_KEY, ALGORITHM
+from fastapi import Header, Request
+from .connections_util import upsert_connection
 
 # Dépendance: exige un admin
 from fastapi import Depends, HTTPException, status
@@ -17,6 +16,7 @@ def get_user_by_username(db: Session, username: str) -> Optional[User]:
     return db.query(User).filter(User.username == username).first()
 
 def get_current_user(
+    request: Request,
     db: Session = Depends(get_db),
     authorization: Optional[str] = Header(None, alias="Authorization"),
     ) -> User:
@@ -29,10 +29,16 @@ def get_current_user(
     username = decode_access_token(token)
     user = get_user_by_username(db, username)
     if not user:
-        raise HTTPException(status_code=401, detail="Utilisateur introuvable")
-    payload = jwt_decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    if payload.get("ver", 0) != getattr(user, "token_version", 0):
-        raise HTTPException(status_code=401, detail="Jeton révoqué")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Utilisateur introuvable")
+
+    # Marquer l'activité HTTP (adresse IP du client)
+    try:
+        client_ip = request.client.host if request and request.client else "unknown"
+        upsert_connection(db, user.id, transport="http", address=client_ip)
+    except Exception:
+        # on n'empêche pas la requête en cas d'erreur de télémétrie
+        pass
+
     return user
 
 def require_admin(current: User = Depends(get_current_user)) -> User:

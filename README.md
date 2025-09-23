@@ -200,7 +200,7 @@ data/message_key.key
 
    Options :
 
-   * `?q=bo` (filtre par fragment)
+   * `?q=bo` (filtre par username, ex : Bob)
    * `?limit=50`
      ✅ 200 + liste (exclut l’utilisateur courant)
 
@@ -251,28 +251,35 @@ data/message_key.key
 
 ### C) Administration (réservé `is_admin=true`, ex : root)
 
-8. **Voir tous les utilisateurs (vue admin)**
+8. **Connections utilisateur**
+
+```
+    GET http://localhost:8000/connections?minutes=60
+    Headers : Authorization: Bearer <token>
+```
+
+9. **Voir tous les utilisateurs (vue admin)**
 
    ```
    GET http://127.0.0.1:8000/admin/users
    Headers : Authorization: Bearer <admin_token>
    ```
 
-9. **Donner les droits admin**
+10. **Donner les droits admin**
 
    ```
    POST http://127.0.0.1:8000/admin/users/{user_id}/promote
    Headers : Authorization: Bearer <admin_token>
    ```
 
-10. **Retirer les droits admin**
+11. **Retirer les droits admin**
 
     ```
     POST http://127.0.0.1:8000/admin/users/{user_id}/demote
     Headers : Authorization: Bearer <admin_token>
     ```
 
-11. **Supprimer un utilisateur**
+12. **Supprimer un utilisateur**
 
     ```
     DELETE http://127.0.0.1:8000/admin/users/{user_id}

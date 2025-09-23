@@ -18,7 +18,9 @@ class User(Base):
 
     # Relations (chargées à la demande)
     messages: Mapped[List["Message"]] = relationship(back_populates="sender", cascade="all,delete-orphan")
-    connections: Mapped[List["Connection"]] = relationship(back_populates="owner", cascade="all,delete-orphan")
+    connections: Mapped[list["Connection"]] = relationship(
+        back_populates="owner", cascade="all,delete-orphan"
+    )
 
 class Message(Base):
     """Message textuel dans une room (canal)."""
@@ -39,20 +41,16 @@ class Message(Base):
 Index("idx_messages_room_ts", Message.room_id, Message.created_at)
 
 class Connection(Base):
-    """Journal d'un voisin/peer connu par un utilisateur donné (ex: découverte LAN/P2P)."""
+    """🇫🇷 Enregistre l'activité réseau d'un utilisateur (présence/dernier accès)."""
     __tablename__ = "connections"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
-    peer_id: Mapped[str] = mapped_column(String(128), index=True)
-    transport: Mapped[str] = mapped_column(String(64))   # ex: "ws", "tcp", "udp-broadcast"
-    address: Mapped[str] = mapped_column(String(256))    # ex: "192.168.1.42:8000"
-    last_seen_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
+    peer_id: Mapped[int | None] = mapped_column(Integer, nullable=True)  # réservé P2P (optionnel)
+    transport: Mapped[str] = mapped_column(String(32), nullable=False)   # 'http' | 'websocket' | ...
+    address: Mapped[str] = mapped_column(String(128), nullable=False)    # IP du client
+    last_seen: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    # Relation inverse vers User
-    owner: Mapped[User] = relationship(back_populates="connections")
-
-# Index rapide par (owner, peer)
-Index("idx_conn_owner_peer", Connection.owner_id, Connection.peer_id, unique=True)
+    owner: Mapped["User"] = relationship(back_populates="connections")

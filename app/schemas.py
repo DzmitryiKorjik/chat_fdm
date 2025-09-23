@@ -1,7 +1,7 @@
 from __future__ import annotations
 from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional
 
 class UserCreate(BaseModel):
     """ Données requises pour créer / authentifier un utilisateur."""
@@ -38,7 +38,7 @@ class ConnectionOut(BaseModel):
     peer_id: str
     transport: str
     address: str
-    last_seen_at: datetime
+    last_seen: datetime
 
 # Exposition publique d'un utilisateur (sans champs sensibles)
 class UserPublic(BaseModel):
