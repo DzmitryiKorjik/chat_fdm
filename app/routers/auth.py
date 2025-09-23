@@ -2,7 +2,6 @@
 from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from datetime import timedelta
 from ..schemas import UserCreate, TokenResponse
 from ..models import User
 from ..database import get_db
