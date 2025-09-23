@@ -1,5 +1,5 @@
 from __future__ import annotations
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, constr
 from datetime import datetime
 from typing import Optional
 
@@ -7,6 +7,15 @@ class UserCreate(BaseModel):
     """ Données requises pour créer / authentifier un utilisateur."""
     username: str = Field(..., min_length=3, max_length=64)
     password: str = Field(..., min_length=6)
+    public_key: Optional[str] = None
+
+class PublicKeyIn(BaseModel):
+    public_key: constr(min_length=40, max_length=4096)
+
+class PublicKeyOut(BaseModel):
+    user_id: int
+    username: str
+    public_key: Optional[str] = None
 
 class TokenResponse(BaseModel):
     """ Réponse renvoyant un token JWT et sa durée de vie (secondes/minutes)."""

@@ -14,6 +14,7 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(String(256), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     token_version: Mapped[int] = mapped_column(Integer, default=0)
+    public_key: Mapped[str | None] = mapped_column(String(2048), nullable=True)  # clé publique
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False)  # privilèges admin
 
     # Relations (chargées à la demande)

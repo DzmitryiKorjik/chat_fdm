@@ -18,7 +18,11 @@ def register_user(payload: UserCreate, db: Session = Depends(get_db)) -> dict:
     """ Crée un nouvel utilisateur avec un mot de passe haché."""
     if get_user_by_username(db, payload.username):
         raise HTTPException(status_code=409, detail="Nom d'utilisateur déjà utilisé")
-    user = User(username=payload.username, password_hash=get_password_hash(payload.password))
+    user = User(
+        username=payload.username,
+        password_hash=get_password_hash(payload.password),
+        public_key=(payload.public_key or None),
+    )
     db.add(user)
     db.commit()
     db.refresh(user)

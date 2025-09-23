@@ -1,15 +1,37 @@
-# Routes utilitaires autour des utilisateurs (annuaire)
 from __future__ import annotations
+from typing import List
+from ..schemas import UserPublic
+from ..deps import require_admin
+from ..schemas import PublicKeyIn, PublicKeyOut
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import List
 from ..database import get_db
-from ..models import User
-from ..schemas import UserPublic
 from ..deps import get_current_user
-from ..deps import require_admin
+from ..models import User
 
-router = APIRouter(tags=["users"])  # prefix sera ajouté dans main.py si besoin
+router = APIRouter(prefix="/users", tags=["users"])
+
+def _normalize_pubkey(raw: str) -> str:
+    """Nettoyage minimal de la clé (trim)."""
+    key = (raw or "").strip()
+    if not key:
+        raise HTTPException(status_code=400, detail="Clé publique vide")
+    if len(key) > 4096:
+        raise HTTPException(status_code=400, detail="Clé publique trop longue")
+    return key
+
+@router.put("/me/public_key", response_model=PublicKeyOut)
+def set_my_public_key(
+    payload: PublicKeyIn,
+    db: Session = Depends(get_db),
+    current: User = Depends(get_current_user),
+) -> PublicKeyOut:
+    """🇫🇷 Déclare/remplace la clé publique de l'utilisateur courant."""
+    current.public_key = _normalize_pubkey(payload.public_key)
+    db.add(current)
+    db.commit()
+    db.refresh(current)
+    return PublicKeyOut(user_id=current.id, username=current.username, public_key=current.public_key)
 
 @router.get("/users", response_model=List[UserPublic])
 def list_users(
@@ -24,6 +46,18 @@ def list_users(
         query = query.filter(User.username.ilike(f"%{q}%"))
     rows = query.order_by(User.username.asc()).limit(max(1, min(limit, 100))).all()
     return [UserPublic.model_validate(u) for u in rows]
+
+@router.get("/{user_id}/public_key", response_model=PublicKeyOut)
+def get_user_public_key(
+    user_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> PublicKeyOut:
+    """🇫🇷 Récupère la clé publique d'un utilisateur (pour chiffrer un message)."""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Utilisateur introuvable")
+    return PublicKeyOut(user_id=user.id, username=user.username, public_key=user.public_key)
 
 # ─────────────────────────── Admin only ───────────────────────────
 
