@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field, constr
+from pydantic import BaseModel, ConfigDict, Field, constr
 
 
 class UserCreate(BaseModel):
@@ -15,6 +15,8 @@ class UserCreate(BaseModel):
 
 
 class PublicKeyIn(BaseModel):
+    """Clé publique fournie par le frontend (PEM/base64)."""
+
     public_key: constr(min_length=40, max_length=4096)
 
 
@@ -25,7 +27,7 @@ class PublicKeyOut(BaseModel):
 
 
 class TokenResponse(BaseModel):
-    """Réponse renvoyant un token JWT et sa durée de vie (secondes/minutes)."""
+    """Réponse renvoyant un token JWT et sa durée de vie (minutes)."""
 
     access_token: str
     token_type: str = "bearer"
@@ -64,24 +66,28 @@ class ConnectionOut(BaseModel):
     transport: str
     address: str
     last_seen: datetime
+    # Si tu veux ajouter l'heure de Paris :
+    # last_seen_paris: Optional[str] = None
 
 
-# Exposition publique d'un utilisateur (sans champs sensibles)
 class UserPublic(BaseModel):
+    """Exposition publique d'un utilisateur (sans champs sensibles)."""
+
     id: int
     username: str
     is_admin: bool
 
-    class Config:
-        from_attributes = True
+    # Pydantic v2 : équivalent à orm_mode=True
+    model_config = ConfigDict(from_attributes=True)
 
 
-# Requête pour ouvrir une DM
 class OpenDMRequest(BaseModel):
-    # on ouvre une DM par ID de destinataire
+    """Requête pour ouvrir une DM (par ID du destinataire)."""
+
     peer_id: int
 
 
-# Réponse contenant le room_id de la DM
 class OpenDMResponse(BaseModel):
+    """Réponse contenant le room_id de la DM."""
+
     room_id: str
