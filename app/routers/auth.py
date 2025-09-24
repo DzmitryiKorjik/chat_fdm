@@ -1,4 +1,4 @@
-"""🔑 Routes d'authentification : /auth/register, /auth/login, /auth/me."""
+"""Routes d'authentification : /auth/register, /auth/login, /auth/me."""
 
 from __future__ import annotations
 

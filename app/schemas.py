@@ -77,6 +77,7 @@ class UserPublic(BaseModel):
     username: str
     is_admin: bool
     model_config = ConfigDict(from_attributes=True)
+    public_key: Optional[str] = None
 
 
 class OpenDMRequest(BaseModel):
