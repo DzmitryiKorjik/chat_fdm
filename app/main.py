@@ -24,6 +24,7 @@ from .routers import users as users_router
 
 logger = logging.getLogger(__name__)
 
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Tâche périodique : purge des messages au-delà du TTL global
 # ─────────────────────────────────────────────────────────────────────────────
@@ -51,6 +52,7 @@ async def _cleanup_loop() -> None:
         # Cadence : 1 fois / heure
         await asyncio.sleep(3600)
 
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Lifespan FastAPI (remplace les anciens @app.on_event)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -66,6 +68,7 @@ async def lifespan(app: FastAPI):
         task.cancel()
         with contextlib.suppress(asyncio.CancelledError):
             await task
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Application
