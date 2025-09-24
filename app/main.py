@@ -24,7 +24,6 @@ from .routers import users as users_router
 
 logger = logging.getLogger(__name__)
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Tâche périodique : purge des messages au-delà du TTL global
 # ─────────────────────────────────────────────────────────────────────────────
@@ -52,7 +51,6 @@ async def _cleanup_loop() -> None:
         # Cadence : 1 fois / heure
         await asyncio.sleep(3600)
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Lifespan FastAPI (remplace les anciens @app.on_event)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -68,7 +66,6 @@ async def lifespan(app: FastAPI):
         task.cancel()
         with contextlib.suppress(asyncio.CancelledError):
             await task
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Application
@@ -100,7 +97,6 @@ app.include_router(dm_router.router, prefix="/dm", tags=["dm"])
 _web_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "web"))
 if os.path.isdir(_web_dir):
     app.mount("/ui", StaticFiles(directory=_web_dir, html=True), name="ui")
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Lancement direct en dev
