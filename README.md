@@ -45,6 +45,13 @@ Ce guide couvre l’installation locale, la configuration, le démarrage et **un
 > (ou mettez à jour `passlib`).
 
 ---
+### Démarrage server local:
+
+```bash
+  python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+---
 
 ## 3) Configuration
 
@@ -164,6 +171,12 @@ data/message_key.key
 * `GET  /presence` — liste des utilisateurs « en ligne » (pour tous les utilisateurs)
 * `GET  /presence/{user_id}` — statut ciblé
 * `GET  /connections` — **vue admin** détaillée (inclut IP/transport)
+
+### Annuaire utilisateurs
+
+* `GET  /users/annuaire` — annuaire complet (avec clé publique)
+* `GET  /users/annuaire?only_with_key=true` — annuaire (uniquement avec clé publique)
+* `GET  /users/annuaire?q=...&limit=...` — annuaire filtré par nom et limité
 
 ### Admin
 
