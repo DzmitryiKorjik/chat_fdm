@@ -1,15 +1,18 @@
-from typing import List, Optional
-from sqlalchemy.orm import Session
 from datetime import datetime, timezone
-from ..schemas import MessageIn, MessageOut
-from ..models import Message, User
+from typing import List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
+from ..crypto import encrypt_text, safe_decrypt
 from ..database import get_db
 from ..deps import get_current_user
-from ..crypto import encrypt_text, safe_decrypt
-from fastapi import APIRouter, Depends, HTTPException, status
+from ..models import Message, User
+from ..schemas import MessageIn, MessageOut
 from ..utils_dm import is_dm_room, is_dm_room_ids, parse_dm_ids
 
 router = APIRouter(tags=["messages"])
+
 
 def _ensure_dm_access(room_id: str, current_user: User) -> None:
     """Autorisation DM: supporte dmid:<idA>:<idB> et compat dm:<alice>:<bob>."""
@@ -18,9 +21,13 @@ def _ensure_dm_access(room_id: str, current_user: User) -> None:
         try:
             a, b = parse_dm_ids(room_id)
         except Exception:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="room_id DM invalide")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="room_id DM invalide"
+            )
         if current_user.id not in (a, b):
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Accès refusé à cette DM")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Accès refusé à cette DM"
+            )
         return
 
     # Ancien format par usernames (compat)
@@ -28,10 +35,15 @@ def _ensure_dm_access(room_id: str, current_user: User) -> None:
         try:
             _, u1, u2 = room_id.split(":")
         except ValueError:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="room_id DM invalide")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="room_id DM invalide"
+            )
         if current_user.username not in (u1, u2):
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Accès refusé à cette DM")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Accès refusé à cette DM"
+            )
         return
+
 
 @router.post("/{room_id}/messages", response_model=MessageOut, status_code=201)
 def post_message(
@@ -43,12 +55,17 @@ def post_message(
     _ensure_dm_access(room_id, current)
     cipher = encrypt_text(payload.content)
     msg = Message(room_id=room_id, sender_id=current.id, content=cipher)
-    db.add(msg); db.commit(); db.refresh(msg)
+    db.add(msg)
+    db.commit()
+    db.refresh(msg)
     return MessageOut(
-        id=msg.id, room_id=msg.room_id, sender=current.username,
+        id=msg.id,
+        room_id=msg.room_id,
+        sender=current.username,
         content=safe_decrypt(msg.content),
         created_at=msg.created_at,
     )
+
 
 @router.get("/{room_id}/messages", response_model=List[MessageOut])
 def list_messages(

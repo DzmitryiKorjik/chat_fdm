@@ -1,53 +1,70 @@
 from __future__ import annotations
-from pydantic import BaseModel, Field, constr
+
 from datetime import datetime
 from typing import Optional
 
+from pydantic import BaseModel, Field, constr
+
+
 class UserCreate(BaseModel):
-    """ Données requises pour créer / authentifier un utilisateur."""
+    """Données requises pour créer / authentifier un utilisateur."""
+
     username: str = Field(..., min_length=3, max_length=64)
     password: str = Field(..., min_length=6)
     public_key: Optional[str] = None
 
+
 class PublicKeyIn(BaseModel):
     public_key: constr(min_length=40, max_length=4096)
+
 
 class PublicKeyOut(BaseModel):
     user_id: int
     username: str
     public_key: Optional[str] = None
 
+
 class TokenResponse(BaseModel):
-    """ Réponse renvoyant un token JWT et sa durée de vie (secondes/minutes)."""
+    """Réponse renvoyant un token JWT et sa durée de vie (secondes/minutes)."""
+
     access_token: str
     token_type: str = "bearer"
     expires_in: int
 
+
 class MessageIn(BaseModel):
-    """ Corps d'un message à créer."""
+    """Corps d'un message à créer."""
+
     content: str = Field(..., min_length=1, max_length=10_000)
 
+
 class MessageOut(BaseModel):
-    """ Représentation publique d'un message."""
+    """Représentation publique d'un message."""
+
     id: int
     room_id: str
     sender: str
     content: str
     created_at: datetime
 
+
 class ConnectionIn(BaseModel):
-    """ Déclaration/MAJ d'un voisin (peer)."""
+    """Déclaration/MAJ d'un voisin (peer)."""
+
     peer_id: str
     transport: str
     address: str
     last_seen_ms: Optional[int] = None
 
+
 class ConnectionOut(BaseModel):
-    """ Représentation d'un voisin connu."""
+    """Représentation d'un voisin connu."""
+
     peer_id: str
     transport: str
     address: str
     last_seen: datetime
+
 
 # Exposition publique d'un utilisateur (sans champs sensibles)
 class UserPublic(BaseModel):
@@ -58,10 +75,12 @@ class UserPublic(BaseModel):
     class Config:
         from_attributes = True
 
+
 # Requête pour ouvrir une DM
 class OpenDMRequest(BaseModel):
     # on ouvre une DM par ID de destinataire
     peer_id: int
+
 
 # Réponse contenant le room_id de la DM
 class OpenDMResponse(BaseModel):

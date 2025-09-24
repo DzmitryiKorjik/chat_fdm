@@ -16,7 +16,7 @@ Ce guide explique l’installation locale, le démarrage, et **un plan de tests 
 
 ```bash
   # Cloner ou copier votre projet
-  git clone https://github.com/DzmitryiKorjik/chat_fdm.git 
+  git clone https://github.com/DzmitryiKorjik/chat_fdm.git
   cd chat_fdm
 
   # Créer l'environnement virtuel
@@ -91,7 +91,7 @@ data/message_key.key
     # Activer l'env si besoin
     .\.venv\Scripts\activate   # Windows
     # source .venv/bin/activate    # Linux/macOS
-    
+
     # Lancer l’API
     uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
@@ -357,7 +357,3 @@ On pourra l’ajouter plus tard sans casser les clients actuels.
 *(Quand tu seras prêt, je te donne les fichiers `nginx.conf` + `offcom.service` prêt-à-coller.)*
 
 ---
-
-
-
-

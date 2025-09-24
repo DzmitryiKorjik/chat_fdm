@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, DeclarativeBase
 from typing import Generator
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
+
 from .config import DATABASE_URL
 
 # Création du moteur SQLAlchemy
@@ -23,10 +25,13 @@ SessionLocal = sessionmaker(
     autoflush=False,
 )
 
+
 # Classe de base pour tous les modèles ORM
 class Base(DeclarativeBase):
     """Base déclarative dont héritent tous les modèles ORM."""
+
     pass
+
 
 # Dépendance FastAPI : ouvre/ferme une session DB par requête
 def get_db() -> Generator:

@@ -1,22 +1,27 @@
 """Script utilitaire : créer l'utilisateur root (admin) s'il n'existe pas."""
+
 from __future__ import annotations
 
+import os
+
 # IMPORTANT — ce bloc doit être AVANT tout import relatif (from .xxx import ...)
-import sys, os
+import sys
+
 if __name__ == "__main__" and __package__ is None:
     # ➜ ajoute le répertoire racine du projet dans sys.path et définit le package
     sys.path.append(os.path.dirname(os.path.dirname(__file__)))
     __package__ = "app"
 
-# Imports relatifs (fonctionneront maintenant en mode script)
-from .database import SessionLocal, engine, Base
-from .models import User
 from .auth import get_password_hash
+
+# Imports relatifs (fonctionneront maintenant en mode script)
+from .database import Base, SessionLocal, engine
+from .models import User
 
 
 def main() -> None:
     """Crée le compte root (admin) si absent."""
-    #Crée les tables si besoin
+    # Crée les tables si besoin
     Base.metadata.create_all(bind=engine)
 
     db = SessionLocal()

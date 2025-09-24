@@ -1,19 +1,22 @@
 from __future__ import annotations
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+
 from ..database import get_db
 from ..deps import get_current_user
-from ..schemas import OpenDMRequest, OpenDMResponse
 from ..models import User
+from ..schemas import OpenDMRequest, OpenDMResponse
 from ..utils_dm import canonical_dm_room_ids
 
 router = APIRouter(tags=["dm"])
+
 
 @router.post("/open", response_model=OpenDMResponse)
 def open_dm(
     payload: OpenDMRequest,
     db: Session = Depends(get_db),
-    current = Depends(get_current_user),
+    current=Depends(get_current_user),
 ) -> OpenDMResponse:
     """Ouvre (ou récupère) une DM par IDs et renvoie son room_id (dmid:a:b)."""
     if payload.peer_id == current.id:

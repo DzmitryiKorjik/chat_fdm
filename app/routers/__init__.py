@@ -1,1 +1,1 @@
-""" Paquet des routeurs FastAPI (endpoints REST)."""
+"""Paquet des routeurs FastAPI (endpoints REST)."""
