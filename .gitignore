@@ -5,6 +5,7 @@ node_modeiles 2
 __pycache__
 app/__pycache__
 tests/__pycache__
+tests
 *.pyc
 .DS_Store
 .env
@@ -32,3 +33,7 @@ media
 data/*.key
 data/*.db
 data/*.sqlite3
+.flake8
+.pre-commit-config.yaml
+pytest.ini
+pyproject.toml
