@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import hashlib
+import json
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy.orm import Session
 
 from ..database import get_db
@@ -98,11 +100,13 @@ def user_directory(
     limit: int = Query(500, ge=1, le=1000),
     db: Session = Depends(get_db),
     _: User = Depends(get_current_user),
+    request: Request = None,
+    response: Response = None,
 ) -> List[UserPublic]:
-    """Annuaire complet des utilisateurs (inclut public_key).
-    - `q`: filtre par username (ILIKE)
-    - `only_with_key`: renvoyer uniquement ceux qui ont une clé publique
-    - `limit`: borne de sécurité
+    """
+    Annuaire complet des utilisateurs (inclut public_key).
+    - ETag calculé sur (id, username, public_key) triés → permet 304 Not Modified.
+    - Cache-Control: private, max-age=60 (ajuste selon ton besoin).
     """
     query = db.query(User)
     if q:
@@ -111,7 +115,31 @@ def user_directory(
         query = query.filter(User.public_key.isnot(None))
 
     rows = query.order_by(User.username.asc()).limit(limit).all()
-    return [UserPublic.model_validate(u) for u in rows]
+    items = [UserPublic.model_validate(u) for u in rows]
+
+    # -- Construction d’une empreinte stable du contenu pour ETag --
+    # On sérialise une liste minimaliste triée pour stabilité.
+    etag_payload = [
+        {"id": it.id, "username": it.username, "public_key": it.public_key} for it in items
+    ]
+    etag_str = json.dumps(etag_payload, sort_keys=True, separators=(",", ":"), default=str)
+    etag = 'W/"' + hashlib.sha256(etag_str.encode("utf-8")).hexdigest() + '"'
+
+    # -- Si le client envoie If-None-Match et que ça matche → 304 (pas de corps) --
+    inm = request.headers.get("if-none-match") if request else None
+    if inm and inm == etag:
+        if response:
+            response.status_code = 304
+            response.headers["ETag"] = etag
+            response.headers["Cache-Control"] = "private, max-age=60"
+        return []  # corps ignoré en 304, renvoyer une liste vide est OK ici
+
+    # -- Sinon, on renvoie les données + entêtes de cache --
+    if response:
+        response.headers["ETag"] = etag
+        response.headers["Cache-Control"] = "private, max-age=60"
+
+    return items
 
 
 # ─────────────────────────── Admin only ───────────────────────────
