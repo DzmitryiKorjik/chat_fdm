@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..deps import get_current_user, require_admin
+from ..deps import get_current_user
 from ..models import User
 from ..schemas import PublicKeyIn, PublicKeyOut, UserPublic
 
@@ -136,69 +136,3 @@ def user_directory(
         response.headers["Cache-Control"] = "private, max-age=60"
 
     return items
-
-
-# ─────────────────────────── Admin only ───────────────────────────
-# Ces routes seront accessibles via /users/admin/...
-# Si tu veux /admin/users sans le /users devant, mets ces routes
-# dans un autre routeur avec prefix="/admin" et include_router(...) séparément.
-
-
-@router.get("/admin/users", response_model=List[UserPublic])
-def admin_list_all_users(
-    db: Session = Depends(get_db),
-    admin: User = Depends(require_admin),
-) -> List[UserPublic]:
-    """Liste complète des utilisateurs (vue admin)."""
-    rows = db.query(User).order_by(User.id.asc()).all()
-    return [UserPublic.model_validate(u) for u in rows]
-
-
-@router.post("/admin/users/{user_id:int}/promote", response_model=UserPublic)
-def admin_promote(
-    user_id: int,
-    db: Session = Depends(get_db),
-    admin: User = Depends(require_admin),
-) -> UserPublic:
-    """Donner les droits admin à un utilisateur."""
-    user = db.get(User, user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="Utilisateur introuvable")
-    user.is_admin = True
-    db.commit()
-    db.refresh(user)
-    return UserPublic.model_validate(user)
-
-
-@router.post("/admin/users/{user_id:int}/demote", response_model=UserPublic)
-def admin_demote(
-    user_id: int,
-    db: Session = Depends(get_db),
-    admin: User = Depends(require_admin),
-) -> UserPublic:
-    """Retirer les droits admin d'un utilisateur."""
-    if user_id == admin.id:
-        raise HTTPException(status_code=400, detail="Impossible de se rétrograder soi-même")
-    user = db.get(User, user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="Utilisateur introuvable")
-    user.is_admin = False
-    db.commit()
-    db.refresh(user)
-    return UserPublic.model_validate(user)
-
-
-@router.delete("/admin/users/{user_id:int}", status_code=204)
-def admin_delete_user(
-    user_id: int,
-    db: Session = Depends(get_db),
-    admin: User = Depends(require_admin),
-) -> None:
-    """Supprimer un utilisateur (irréversible)."""
-    if user_id == admin.id:
-        raise HTTPException(status_code=400, detail="Impossible de se supprimer soi-même")
-    user = db.get(User, user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="Utilisateur introuvable")
-    db.delete(user)
-    db.commit()

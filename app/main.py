@@ -16,6 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from .config import CORS_ALLOW_ORIGINS, GLOBAL_MESSAGE_TTL_MIN
 from .database import Base, SessionLocal, engine
 from .models import Message
+from .routers import admin as admin_router
 from .routers import auth as auth_router
 from .routers import connections as connections_router
 from .routers import dm as dm_router
@@ -97,6 +98,7 @@ app.include_router(connections_router.router, prefix="/connections", tags=["conn
 app.include_router(users_router.router)  # le routeur a déjà prefix="/users"
 app.include_router(dm_router.router, prefix="/dm", tags=["dm"])
 app.include_router(presence_router.router)
+app.include_router(admin_router.router)
 
 # UI statique facultative (si app/../web existe) -> /ui
 _web_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "web"))
