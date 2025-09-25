@@ -165,6 +165,7 @@ data/message_key.key
 * `POST /dm/open` — ouvrir une DM (par `peer_id` **ou** `peer_username`)
 * `POST /rooms/{room_id}/messages` — envoyer
 * `GET  /rooms/{room_id}/messages` — lister (options `since_ms`, `limit`)
+* `GET  /rooms/my-rooms` — lister mes rooms (DMs)
 
 ### Présence / Connexions
 
