@@ -50,6 +50,18 @@ class MessageOut(BaseModel):
     created_at: datetime
 
 
+class MessageOutDetailed(BaseModel):
+    """Représentation publique d'un message avec IDs."""
+
+    id: int
+    room_id: str
+    sender: str
+    sender_id: int
+    recipient_id: int
+    content: str
+    created_at: datetime
+
+
 class ConnectionIn(BaseModel):
     """Déclaration/MAJ d'un voisin (peer)."""
 
@@ -67,7 +79,7 @@ class ConnectionOut(BaseModel):
     address: str
     last_seen: datetime
     # l'heure de Paris :
-    # last_seen_paris: Optional[str] = None
+    last_seen_paris: Optional[str] = None
 
 
 class UserPublic(BaseModel):

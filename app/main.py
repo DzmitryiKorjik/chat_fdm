@@ -20,6 +20,7 @@ from .routers import auth as auth_router
 from .routers import connections as connections_router
 from .routers import dm as dm_router
 from .routers import messages as messages_router
+from .routers import presence as presence_router
 from .routers import users as users_router
 
 logger = logging.getLogger(__name__)
@@ -89,12 +90,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Routeurs (attention à ne pas re-préfixer dans main si déjà préfixés dans chaque routeur)
+# Routeurs
 app.include_router(auth_router.router, prefix="/auth", tags=["auth"])
 app.include_router(messages_router.router, prefix="/rooms", tags=["messages"])
 app.include_router(connections_router.router, prefix="/connections", tags=["connections"])
 app.include_router(users_router.router)  # le routeur a déjà prefix="/users"
 app.include_router(dm_router.router, prefix="/dm", tags=["dm"])
+app.include_router(presence_router.router)
 
 # UI statique facultative (si app/../web existe) -> /ui
 _web_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "web"))

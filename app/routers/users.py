@@ -29,8 +29,6 @@ def _normalize_pubkey(raw: str) -> str:
 
 
 # ─────────────────────────── Clé publique (utilisateur courant) ───────────────────────────
-
-
 @router.put("/me/public_key", response_model=PublicKeyOut)
 def set_my_public_key(
     payload: PublicKeyIn,
@@ -59,8 +57,6 @@ def get_my_public_key(
 
 # IMPORTANT : placer la route "me" AVANT la route dynamique pour éviter
 # que "me" soit interprété comme {user_id}. On borne aussi user_id à int.
-
-
 @router.get("/{user_id:int}/public_key", response_model=PublicKeyOut)
 def get_user_public_key(
     user_id: int,

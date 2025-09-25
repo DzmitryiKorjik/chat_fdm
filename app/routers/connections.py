@@ -13,6 +13,14 @@ from ..schemas import ConnectionIn, ConnectionOut
 
 router = APIRouter(tags=["connections"])
 
+# ——— Zone Paris optionnelle ———
+try:
+    from zoneinfo import ZoneInfo
+
+    TZ_PARIS = ZoneInfo("Europe/Paris")
+except Exception:
+    TZ_PARIS = None
+
 
 @router.post("/upsert", response_model=ConnectionOut)
 def upsert_connection(
@@ -54,7 +62,12 @@ def upsert_connection(
         peer_id=conn.peer_id,
         transport=conn.transport,
         address=conn.address,
-        last_seen=conn.last_seen_at,
+        last_seen=conn.last_seen,
+        last_seen_paris=(
+            conn.last_seen.astimezone(TZ_PARIS).isoformat()
+            if (TZ_PARIS and conn.last_seen)
+            else None
+        ),
     )
 
 
@@ -64,7 +77,7 @@ def list_connections(
     db: Session = Depends(get_db),
     admin: User = Depends(require_admin),
 ) -> List[dict]:
-    """🇫🇷 Liste des connexions vues récemment (last_seen dans les N minutes)."""
+    """🇫🇷 Liste des connexions vues récemment (last_seen UTC + Paris)."""
     since = datetime.now(timezone.utc) - timedelta(minutes=minutes)
     rows = (
         db.query(Connection)
@@ -72,12 +85,18 @@ def list_connections(
         .order_by(Connection.last_seen.desc())
         .all()
     )
-    return [
-        {
-            "owner_id": c.owner_id,
-            "transport": c.transport,
-            "address": c.address,
-            "last_seen": c.last_seen,
-        }
-        for c in rows
-    ]
+    out = []
+    for c in rows:
+        ls_paris = (
+            c.last_seen.astimezone(TZ_PARIS).isoformat() if (TZ_PARIS and c.last_seen) else None
+        )
+        out.append(
+            {
+                "owner_id": c.owner_id,
+                "transport": c.transport,
+                "address": c.address,
+                "last_seen": c.last_seen.isoformat() if c.last_seen else None,  # UTC
+                "last_seen_paris": ls_paris,  # Paris
+            }
+        )
+    return out
